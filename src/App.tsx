@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import { Spinner, Toaster } from "./components/ui";
@@ -20,6 +20,13 @@ const page = (el: React.ReactNode) => <Suspense fallback={<div className="py-20"
 
 export default function App() {
   const onboarded = useStore((s) => s.settings.onboarded);
+  const theme = useStore((s) => s.settings.theme);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "auto") delete root.dataset.theme;
+    else root.dataset.theme = theme;
+  }, [theme]);
   return (
     <HashRouter>
       <Toaster />

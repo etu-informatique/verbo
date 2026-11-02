@@ -7,14 +7,14 @@ import type { LangCode } from "../lib/languages";
 import { ScorePill, SpeakButton, toast } from "./ui";
 
 const TYPE_COLORS: Record<string, string> = {
-  grammaire: "text-sky-300",
-  conjugaison: "text-sky-300",
-  vocabulaire: "text-amber-300",
-  orthographe: "text-rose-300",
-  accents: "text-rose-300",
-  naturel: "text-violet-300",
-  registre: "text-violet-300",
-  "faux ami": "text-orange-300",
+  grammaire: "text-brand",
+  conjugaison: "text-brand",
+  vocabulaire: "text-warn",
+  orthographe: "text-bad",
+  accents: "text-bad",
+  naturel: "text-brand",
+  registre: "text-brand",
+  "faux ami": "text-brand2",
 };
 
 /** Affiche une correction détaillée : erreurs, version corrigée, version native, astuce. */
@@ -68,12 +68,12 @@ export function CorrectionView({ c, lang, original, compact }: { c: Correction; 
         <div className="space-y-3 border-t border-bad/15 px-3 pb-3 pt-3 animate-fade-up">
           <ul className="space-y-2">
             {c.errors.map((e, i) => (
-              <li key={i} className="rounded-lg bg-black/20 p-2.5">
+              <li key={i} className="rounded-lg bg-sunk p-2.5">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <span className="text-bad line-through decoration-bad/60">{e.wrong}</span>
                   <span className="text-faint">→</span>
                   <span className="font-medium text-ok">{e.right}</span>
-                  <span className={clsx("ml-auto text-[10px] font-semibold uppercase tracking-wider", TYPE_COLORS[e.type] ?? "text-muted")}>
+                  <span className={clsx("ml-auto text-xs font-semibold uppercase tracking-wider", TYPE_COLORS[e.type] ?? "text-muted")}>
                     {e.type}
                   </span>
                 </div>
@@ -84,7 +84,7 @@ export function CorrectionView({ c, lang, original, compact }: { c: Correction; 
 
           {c.corrected && (
             <div>
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-faint">Corrigé</p>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-faint">Corrigé</p>
               <div className="flex items-start gap-2">
                 <p className="flex-1 text-ink">{c.corrected}</p>
                 <SpeakButton text={c.corrected} lang={lang} size="sm" />
@@ -93,7 +93,7 @@ export function CorrectionView({ c, lang, original, compact }: { c: Correction; 
           )}
           {c.natural && c.natural !== c.corrected && (
             <div>
-              <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-violet-300">
+              <p className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-brand">
                 <Sparkles className="size-3" /> Comme un natif
               </p>
               <div className="flex items-start gap-2">
@@ -103,12 +103,12 @@ export function CorrectionView({ c, lang, original, compact }: { c: Correction; 
             </div>
           )}
           {c.tip && (
-            <div className="flex gap-2 rounded-lg bg-amber-400/[0.07] p-2.5 text-xs text-amber-100/90">
+            <div className="flex gap-2 rounded-lg bg-warn/10 p-2.5 text-xs text-ink">
               <Lightbulb className="size-4 shrink-0 text-warn" />
               {c.tip}
             </div>
           )}
-          <button onClick={saveCard} className="flex items-center gap-1.5 text-xs font-medium text-violet-300 hover:text-violet-200">
+          <button onClick={saveCard} className="flex items-center gap-1.5 text-xs font-medium text-brand hover:text-brand">
             <BookmarkPlus className="size-3.5" /> Ajouter aux révisions
           </button>
         </div>

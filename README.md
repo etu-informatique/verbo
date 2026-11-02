@@ -1,8 +1,10 @@
-# Verbo — coach de langues strict
+# Verbo — coach de langues gratuit et exigeant
 
 Verbo est une application web pour progresser en **anglais, espagnol, italien et français**. Elle marche sur ordinateur et sur téléphone, et s'installe comme une application (PWA).
 
-Le cœur de l'app est un **coach IA exigeant** (propulsé par Claude) qui discute, débat et joue des rôles avec toi, et corrige **chaque** faute avec la règle derrière.
+Le cœur de l'app est un **coach IA exigeant** qui discute, débat et joue des rôles avec toi, et corrige **chaque** faute avec la règle derrière.
+
+**100 % gratuit : pas de clé API, pas d'abonnement.**
 
 > Pourquoi ces fonctionnalités ? Voir l'[analyse des applications existantes](docs/ANALYSE.md) (Duolingo, ELSA, Anki, DeepL, Reverso, LingQ, Busuu, Memrise…).
 
@@ -23,11 +25,20 @@ La sévérité du coach se règle sur 3 niveaux : **Exigeant**, **Strict**, **Im
 
 ## Utilisation
 
-1. Ouvre l'app (version en ligne via GitHub Pages, ou en local, voir plus bas).
+1. Ouvre l'app : https://etu-informatique.github.io/verbo/ (ou en local, voir plus bas).
 2. Choisis ta langue maternelle, la langue à apprendre, ton niveau et la sévérité.
-3. Colle ta **clé API Claude** (créée sur [console.anthropic.com](https://console.anthropic.com/settings/keys)) dans l'onboarding ou dans **Réglages**.
+3. C'est tout : aucune clé, aucun compte obligatoire.
 
-La clé est stockée **uniquement dans ton navigateur** (localStorage) et n'est envoyée qu'à `api.anthropic.com`. Sans clé, la prononciation, l'argot, les quiz et les révisions fonctionnent quand même.
+### Les moteurs d'IA (tous gratuits)
+
+| Moteur | Compte ? | Limite | Pour qui |
+|---|---|---|---|
+| **Automatique** (par défaut) | Non | — | Utilise l'IA locale si elle est téléchargée, sinon l'IA en ligne, puis Puter si tu l'as connecté. |
+| **En ligne, sans compte** ([LLM7.io](https://llm7.io)) | Non | Petit quota par jour et par connexion | Pour essayer tout de suite. |
+| **Sur l'appareil** ([WebLLM](https://webllm.mlc.ai), modèle Qwen3) | Non | **Illimité**, privé, marche hors ligne | PC ou Android avec Chrome/Edge récent (WebGPU). Téléchargement unique : ≈ 1 Go (Léger) ou ≈ 2,3 Go (Précis). |
+| **Puter** ([puter.com](https://puter.com)) | Compte Puter gratuit | Crédits gratuits Puter | Rapide sur tous les téléphones, y compris iPhone. |
+
+Tout se règle dans **Réglages → Moteur d'IA**. Pour un usage quotidien sans limite, télécharge l'IA locale une fois (de préférence en Wi-Fi).
 
 Pour la voix (dictée et prononciation), utilise **Chrome, Edge ou Safari** : Firefox ne gère pas la reconnaissance vocale.
 
@@ -50,13 +61,14 @@ npm run preview   # sert le build
 ## Technique
 
 - React 19 + TypeScript + Vite, Tailwind CSS v4, Zustand (état persistant), React Router.
-- IA : SDK officiel `@anthropic-ai/sdk`, appelé directement depuis le navigateur, avec **structured outputs** (réponses JSON validées par schéma). Modèle au choix : Claude Opus 5.5 (par défaut), Sonnet 5.5 ou Haiku 5.5. Le repli automatique côté serveur (`fallbacks: "default"`) est activé sur Opus et Sonnet.
+- IA gratuite : LLM7.io (cloud anonyme), WebLLM (modèle Qwen3 dans le navigateur via WebGPU, exécuté dans un Web Worker) et Puter.js. Les réponses sont contraintes par schéma JSON puis complétées si un champ manque (`src/lib/ai.ts`, `src/lib/localAi.ts`).
+- Design : système généré avec le skill [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) — Flat Design, teal + orange, Plus Jakarta Sans, thème clair/sombre, icônes SVG (Lucide), cibles tactiles de 44 px.
 - Voix : Web Speech API (synthèse + reconnaissance), aucun service tiers.
 - Déploiement automatique sur GitHub Pages à chaque push sur `main` (`.github/workflows/deploy.yml`).
 
 ```
 src/
-  lib/        claude.ts (API), prompts.ts (prompts + schémas), speech.ts (voix),
+  lib/        ai.ts + localAi.ts (moteurs IA gratuits), prompts.ts (prompts + schémas), speech.ts (voix),
               score.ts (notation prononciation / réponses), srs.ts (répétition espacée)
   store/      état persistant (réglages, progression, cartes, erreurs, conversations)
   data/       argot, phrases de prononciation, jeux de rôle, sujets de débat

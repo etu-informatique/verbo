@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import clsx from "clsx";
-import { BookmarkPlus, Check, RotateCcw, Search, Sparkles, Trophy, Wand2 } from "lucide-react";
-import { askJson, friendlyError } from "../lib/claude";
+import { BookmarkPlus, MapPin, Check, RotateCcw, Search, Sparkles, Trophy, Wand2 } from "lucide-react";
+import { askJson, friendlyError } from "../lib/ai";
 import { slangSchema, slangSystem } from "../lib/prompts";
 import { LANGS } from "../lib/languages";
 import { SLANG, SLANG_CATEGORIES, type Register, type Slang } from "../data/slang";
@@ -29,11 +29,11 @@ function SlangCard({ s, known, onToggle }: { s: Slang; known?: boolean; onToggle
       </div>
       <div className="mt-1.5 flex flex-wrap gap-1.5">
         <Badge tone={REG_TONE[s.register] ?? "neutral"}>{s.register}</Badge>
-        {s.region && s.region !== "Partout" && <Badge>📍 {s.region}</Badge>}
+        {s.region && s.region !== "Partout" && <Badge><MapPin className="size-3.5" aria-hidden /> {s.region}</Badge>}
       </div>
       <p className="mt-3 text-sm text-ink">{s.meaning}</p>
       {s.literal && <p className="mt-1 text-xs text-faint">Mot à mot : « {s.literal} »</p>}
-      <div className="mt-3 flex-1 rounded-xl bg-black/20 p-3 text-sm">
+      <div className="mt-3 flex-1 rounded-xl bg-sunk p-3 text-sm">
         <div className="flex items-start gap-2">
           <p className="flex-1 italic">{s.example}</p>
           <SpeakButton text={s.example} lang={s.lang} size="sm" />
@@ -42,7 +42,7 @@ function SlangCard({ s, known, onToggle }: { s: Slang; known?: boolean; onToggle
       </div>
       <div className="mt-3 flex items-center gap-1">
         {onToggle && (
-          <button onClick={onToggle} className={clsx("flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition", known ? "bg-ok/15 text-ok" : "text-muted hover:bg-white/[0.06]")}>
+          <button onClick={onToggle} className={clsx("flex items-center gap-1.5 rounded-lg px-2.5 min-h-9 py-1 text-xs font-medium transition", known ? "bg-ok/15 text-ok" : "text-muted hover:bg-sunk")}>
             <Check className="size-3.5" /> {known ? "Je connais" : "Marquer comme connue"}
           </button>
         )}
@@ -51,7 +51,7 @@ function SlangCard({ s, known, onToggle }: { s: Slang; known?: boolean; onToggle
             const ok = addCard({ front: s.expr, back: s.meaning, note: `${s.example}\n${s.exampleTr}`, source: "argot", lang: s.lang });
             toast(ok ? "Ajoutée aux révisions" : "Déjà dans tes révisions", ok ? "ok" : "info");
           }}
-          className="ml-auto flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-violet-300 hover:bg-white/[0.06]"
+          className="ml-auto flex items-center gap-1.5 rounded-lg px-2.5 min-h-9 py-1 text-xs font-medium text-brand hover:bg-sunk"
         >
           <BookmarkPlus className="size-3.5" /> Réviser
         </button>
@@ -104,7 +104,7 @@ function Quiz({ list }: { list: Slang[] }) {
     return (
       <Card className="flex flex-col items-center gap-3 py-10 text-center animate-pop">
         <Trophy className="size-10 text-warn" />
-        <p className="font-display text-5xl">
+        <p className="font-extrabold tracking-tight text-5xl">
           {good}/{quiz.length}
         </p>
         <p className="text-muted">{pct === 100 ? "Parfait. Tu parles comme un local." : pct >= 70 ? "Pas mal, mais il reste des trous." : "Insuffisant. Retourne réviser les fiches."}</p>
@@ -125,13 +125,13 @@ function Quiz({ list }: { list: Slang[] }) {
 
   return (
     <div className="mx-auto max-w-xl">
-      <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-        <div className="h-full bg-brand-gradient transition-all" style={{ width: `${(i / quiz.length) * 100}%` }} />
+      <div className="mb-4 h-1.5 overflow-hidden rounded-full bg-sunk">
+        <div className="h-full bg-brand transition-all" style={{ width: `${(i / quiz.length) * 100}%` }} />
       </div>
       <Card key={i} className="animate-fade-up">
         <p className="text-xs text-faint">{q.reverse ? "Quelle expression veut dire…" : "Que veut dire…"}</p>
         <div className="mt-2 flex items-start gap-2">
-          <p className="flex-1 font-display text-3xl leading-tight">{q.reverse ? q.s.meaning : q.s.expr}</p>
+          <p className="flex-1 font-extrabold tracking-tight text-3xl leading-tight">{q.reverse ? q.s.meaning : q.s.expr}</p>
           {!q.reverse && <SpeakButton text={q.s.expr} lang={q.s.lang} />}
         </div>
         <div className="mt-5 grid gap-2">
@@ -141,7 +141,7 @@ function Quiz({ list }: { list: Slang[] }) {
               onClick={() => pick(o)}
               className={clsx(
                 "rounded-xl border px-4 py-3 text-left text-sm transition",
-                !picked && "border-line bg-white/[0.03] hover:bg-white/[0.07]",
+                !picked && "border-line bg-sunk hover:bg-sunk",
                 picked && o === q.answer && "border-ok/60 bg-ok/15 text-ok",
                 picked && o === picked && o !== q.answer && "border-bad/60 bg-bad/15 text-bad",
                 picked && o !== q.answer && o !== picked && "border-line opacity-50"
@@ -153,7 +153,7 @@ function Quiz({ list }: { list: Slang[] }) {
         </div>
         {picked && (
           <div className="mt-4 animate-fade-up">
-            <p className="rounded-xl bg-black/20 p-3 text-sm italic">
+            <p className="rounded-xl bg-sunk p-3 text-sm italic">
               {q.s.example} <span className="mt-1 block text-xs not-italic text-faint">{q.s.exampleTr}</span>
             </p>
             <Button
@@ -210,7 +210,7 @@ function Generator({ existing }: { existing: Slang[] }) {
         <p className="text-sm text-muted">Choisis un thème : l'IA te sort des expressions que les natifs utilisent vraiment, avec la région où elles se disent.</p>
         <div className="mt-3 flex flex-wrap gap-2">
           {THEMES.map((t) => (
-            <button key={t} onClick={() => run(t)} disabled={loading} className="rounded-full border border-line bg-white/[0.04] px-3 py-1.5 text-sm transition hover:border-brand/50 hover:bg-brand/10 disabled:opacity-50">
+            <button key={t} onClick={() => run(t)} disabled={loading} className="rounded-lg border border-line bg-sunk px-3 min-h-9 py-1 text-sm transition hover:border-brand hover:bg-brand-soft disabled:opacity-50">
               {t}
             </button>
           ))}
@@ -301,7 +301,7 @@ export default function SlangPage() {
               <input className="field pl-9" placeholder="Chercher…" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
             <label className="flex items-center gap-2 text-sm text-muted">
-              <input type="checkbox" className="accent-violet-500" checked={hideKnown} onChange={(e) => setHideKnown(e.target.checked)} />
+              <input type="checkbox" className="accent-[var(--brand)]" checked={hideKnown} onChange={(e) => setHideKnown(e.target.checked)} />
               Masquer celles que je connais
             </label>
           </div>
@@ -310,7 +310,7 @@ export default function SlangPage() {
               <button
                 key={c}
                 onClick={() => setCat(c)}
-                className={clsx("shrink-0 rounded-full border px-3 py-1.5 text-sm transition", cat === c ? "border-brand/60 bg-brand/15 text-ink" : "border-line text-muted hover:text-ink")}
+                className={clsx("shrink-0 rounded-lg border px-3 min-h-9 py-1 text-sm transition", cat === c ? "border-brand bg-brand-soft text-ink" : "border-line text-muted hover:text-ink")}
               >
                 {c}
               </button>

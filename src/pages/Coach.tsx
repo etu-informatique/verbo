@@ -1,15 +1,67 @@
 import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
-import { ArrowLeft, ArrowUp, History, Languages, Mic, MicOff, Plus, Trash2, Volume2, VolumeX } from "lucide-react";
-import type { BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
-import { askJson, friendlyError } from "../lib/claude";
-import { coachSchema, coachSystem, MODE_INFO, START_TOKEN } from "../lib/prompts";
+import {
+  ArrowLeft,
+  ArrowUp,
+  BedDouble,
+  Briefcase,
+  Coffee,
+  Drama,
+  GraduationCap,
+  History,
+  House,
+  Languages,
+  Laptop,
+  Luggage,
+  Map,
+  MessageCircle,
+  Mic,
+  MicOff,
+  PartyPopper,
+  Plus,
+  ShoppingBag,
+  ShoppingBasket,
+  Stethoscope,
+  Swords,
+  Target,
+  Trash2,
+  UtensilsCrossed,
+  Volume2,
+  VolumeX,
+  type LucideIcon,
+} from "lucide-react";
+import { askJson, friendlyError, type ChatMessage } from "../lib/ai";
+import { coachSchemaFor, coachSystem, MODE_INFO, START_TOKEN } from "../lib/prompts";
+import { fixReplyLanguage } from "../lib/detectLang";
 import { LANGS } from "../lib/languages";
 import { speak, useSpeechRecognition } from "../lib/speech";
 import { DEBATE_TOPICS, FREE_TOPICS, SCENARIOS } from "../data/scenarios";
 import { uid, useStore, type ChatMode, type ChatMsg, type Conversation, type Correction } from "../store/useStore";
 import { Badge, Button, ErrorBox, IconButton, Modal, PageHeader, SpeakButton, Spinner } from "../components/ui";
 import { CorrectionView } from "../components/Correction";
+import { Flag } from "../components/Flag";
+
+const MODE_ICONS: Record<ChatMode, LucideIcon> = { libre: MessageCircle, debat: Swords, role: Drama, examen: Target, prof: GraduationCap };
+
+const SCENARIO_ICONS: Record<string, LucideIcon> = {
+  restaurant: UtensilsCrossed,
+  interview: Briefcase,
+  airport: Luggage,
+  doctor: Stethoscope,
+  apartment: House,
+  party: PartyPopper,
+  shop: ShoppingBag,
+  hotel: BedDouble,
+  directions: Map,
+  market: ShoppingBasket,
+  date: Coffee,
+  coworker: Laptop,
+};
+
+function ModeIcon({ mode, className }: { mode: ChatMode; className?: string }) {
+  const Icon = MODE_ICONS[mode];
+  return <Icon className={className} aria-hidden />;
+}
 
 interface CoachReply {
   correction: Correction;
@@ -36,11 +88,13 @@ function Setup({ onStart, right }: { onStart: (mode: ChatMode, topic: string, ti
             onClick={() => setMode(m)}
             className={clsx(
               "rounded-2xl border p-3 text-left transition active:scale-[0.98] md:p-4",
-              mode === m ? "border-brand/60 bg-brand/10" : "border-line bg-white/[0.03] hover:bg-white/[0.06]",
+              mode === m ? "border-brand bg-brand-soft" : "border-line bg-sunk hover:bg-sunk",
               m === "prof" && "col-span-2 md:col-span-1"
             )}
           >
-            <span className="text-2xl">{MODE_INFO[m].emoji}</span>
+            <span className={clsx("flex size-9 items-center justify-center rounded-lg", mode === m ? "bg-brand text-on-brand" : "bg-brand-soft text-brand")}>
+              <ModeIcon mode={m} className="size-[18px]" />
+            </span>
             <p className="mt-2 text-sm font-semibold">{MODE_INFO[m].name}</p>
             <p className="mt-0.5 text-xs leading-snug text-muted">{MODE_INFO[m].desc}</p>
           </button>
@@ -53,11 +107,11 @@ function Setup({ onStart, right }: { onStart: (mode: ChatMode, topic: string, ti
             <h2 className="mb-3 text-sm font-semibold text-muted">De quoi veux-tu parler ?</h2>
             <div className="flex flex-wrap gap-2">
               {FREE_TOPICS.map((t) => (
-                <button key={t} onClick={() => start(t)} className="rounded-full border border-line bg-white/[0.04] px-4 py-2 text-sm transition hover:border-brand/50 hover:bg-brand/10">
+                <button key={t} onClick={() => start(t)} className="min-h-11 rounded-lg border border-line bg-panel px-4 text-sm font-medium transition-colors hover:border-brand hover:bg-brand-soft">
                   {t}
                 </button>
               ))}
-              <button onClick={() => start("", "Conversation libre")} className="rounded-full bg-brand-gradient px-4 py-2 text-sm font-medium text-white">
+              <button onClick={() => start("", "Conversation libre")} className="min-h-11 rounded-lg bg-brand2 px-4 text-sm font-semibold text-on-brand2 hover:brightness-110">
                 Surprends-moi
               </button>
             </div>
@@ -69,8 +123,9 @@ function Setup({ onStart, right }: { onStart: (mode: ChatMode, topic: string, ti
             <h2 className="mb-3 text-sm font-semibold text-muted">Choisis un sujet — le coach prendra le camp opposé.</h2>
             <div className="grid gap-2 md:grid-cols-2">
               {DEBATE_TOPICS.map((t) => (
-                <button key={t} onClick={() => start(t)} className="rounded-2xl border border-line bg-white/[0.03] p-3 text-left text-sm transition hover:border-brand/50 hover:bg-brand/10">
-                  ⚔️ {t}
+                <button key={t} onClick={() => start(t)} className="rounded-2xl border border-line bg-sunk p-3 text-left text-sm transition hover:border-brand hover:bg-brand-soft">
+                  <Swords className="mr-2 inline size-4 text-brand" aria-hidden />
+                  {t}
                 </button>
               ))}
             </div>
@@ -85,9 +140,12 @@ function Setup({ onStart, right }: { onStart: (mode: ChatMode, topic: string, ti
                 <button
                   key={s.id}
                   onClick={() => onStart("role", `${s.setup} The learner's goal: ${s.goal}`, s.title)}
-                  className="rounded-2xl border border-line bg-white/[0.03] p-3 text-left transition hover:border-brand/50 hover:bg-brand/10"
+                  className="rounded-2xl border border-line bg-sunk p-3 text-left transition hover:border-brand hover:bg-brand-soft"
                 >
-                  <span className="text-2xl">{s.emoji}</span>
+                  {(() => {
+                    const Icon = SCENARIO_ICONS[s.id] ?? Drama;
+                    return <Icon className="size-6 text-brand" aria-hidden />;
+                  })()}
                   <p className="mt-1.5 text-sm font-semibold">{s.title}</p>
                   <p className="text-xs leading-snug text-muted">{s.goal}</p>
                 </button>
@@ -97,7 +155,7 @@ function Setup({ onStart, right }: { onStart: (mode: ChatMode, topic: string, ti
         )}
 
         {(mode === "examen" || mode === "prof") && (
-          <div className="glass p-5">
+          <div className="card p-5">
             <p className="text-sm text-muted">
               {mode === "examen"
                 ? "Une dizaine de questions de difficulté croissante. À la fin, le coach te donne ton niveau CECR, tes points forts et tes faiblesses."
@@ -140,7 +198,7 @@ function Bubble({ m, lang, showTr, latest }: { m: ChatMsg; lang: Parameters<type
   if (m.role === "user") {
     return (
       <div className="flex flex-col items-end gap-1.5 animate-fade-up">
-        <div className="max-w-[85%] whitespace-pre-wrap rounded-3xl rounded-br-lg bg-brand-gradient px-4 py-2.5 text-[15px] text-white shadow-lg shadow-fuchsia-500/10">
+        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-brand px-4 py-2.5 text-[15px] text-on-brand">
           {m.text}
         </div>
         {m.correction && (
@@ -155,13 +213,13 @@ function Bubble({ m, lang, showTr, latest }: { m: ChatMsg; lang: Parameters<type
     <div className="flex items-start gap-2.5 animate-fade-up">
       <img src="./icon.svg" alt="" className="mt-1 size-7 shrink-0 rounded-lg" />
       <div className="max-w-[85%]">
-        <div className="whitespace-pre-wrap rounded-3xl rounded-tl-lg border border-line bg-white/[0.05] px-4 py-2.5 text-[15px]">{m.text}</div>
+        <div className="whitespace-pre-wrap rounded-2xl rounded-tl-md border border-line bg-panel px-4 py-2.5 text-[15px]">{m.text}</div>
         {(showTr || tr) && m.translation && <p className="mt-1.5 px-2 text-sm italic text-muted">{m.translation}</p>}
         <div className="mt-1 flex items-center gap-1 px-1">
           <SpeakButton text={m.text} lang={lang} size="sm" />
           <SpeakButton text={m.text} lang={lang} size="sm" rate={0.6} />
           {m.translation && !showTr && (
-            <button onClick={() => setTr(!tr)} className="ml-1 flex items-center gap-1 rounded-full px-2 py-1 text-xs text-muted hover:bg-white/[0.06] hover:text-ink">
+            <button onClick={() => setTr(!tr)} className="ml-1 flex min-h-9 items-center gap-1 rounded-lg px-2 text-sm font-medium text-muted hover:bg-sunk hover:text-ink">
               <Languages className="size-3.5" /> {tr ? "Masquer" : "Traduire"}
             </button>
           )}
@@ -208,13 +266,14 @@ export default function Coach() {
     setLoading(true);
     setError(null);
     try {
-      const msgs: BetaMessageParam[] = conv.messages.slice(-40).map((m) => ({ role: m.role, content: m.text }));
+      const msgs: ChatMessage[] = conv.messages.slice(-40).map((m) => ({ role: m.role, content: m.text }));
       while (msgs.length && msgs[0].role !== "user") msgs.shift();
-      const res = await askJson<CoachReply>({
+      const raw = await askJson<CoachReply>({
         system: coachSystem({ target: conv.lang, native: settings.native, level: settings.level, strictness: settings.strictness, mode: conv.mode, topic: conv.topic }),
         messages: msgs,
-        schema: coachSchema,
+        schema: coachSchemaFor(conv.lang, settings.native),
       });
+      const res = conv.mode === "prof" ? raw : fixReplyLanguage(raw, conv.lang, settings.native);
       const last = conv.messages[conv.messages.length - 1];
       const isStart = last.text === START_TOKEN;
       const updated: Conversation = {
@@ -284,9 +343,9 @@ export default function Coach() {
                   setShowHistory(false);
                   setError(null);
                 }}
-                className={clsx("flex flex-1 items-center gap-3 rounded-xl border border-line p-3 text-left transition hover:bg-white/[0.05]", c.id === activeId && "bg-white/[0.06]")}
+                className={clsx("flex flex-1 items-center gap-3 rounded-xl border border-line p-3 text-left transition hover:bg-sunk", c.id === activeId && "bg-sunk")}
               >
-                <span className="text-xl">{MODE_INFO[c.mode].emoji}</span>
+                <ModeIcon mode={c.mode} className="size-5 shrink-0 text-brand" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{c.title}</span>
                   <span className="block text-xs text-faint">
@@ -339,17 +398,17 @@ export default function Coach() {
           <p className="truncate font-semibold">{chat.title}</p>
           <div className="flex items-center gap-1.5">
             <Badge tone="brand">
-              {MODE_INFO[chat.mode].emoji} {MODE_INFO[chat.mode].name}
+              <ModeIcon mode={chat.mode} className="size-3.5" /> {MODE_INFO[chat.mode].name}
             </Badge>
             <span className="text-xs text-faint">
-              {LANGS[chat.lang].flag} {settings.level}
+              <Flag code={chat.lang} /> {settings.level}
             </span>
           </div>
         </div>
-        <IconButton label={showTr ? "Masquer les traductions" : "Toujours traduire"} onClick={() => setShowTr(!showTr)} className={clsx(showTr && "text-violet-300")}>
+        <IconButton label={showTr ? "Masquer les traductions" : "Toujours traduire"} onClick={() => setShowTr(!showTr)} className={clsx(showTr && "text-brand")}>
           <Languages className="size-5" />
         </IconButton>
-        <IconButton label={settings.autoSpeak ? "Lecture auto activée" : "Lecture auto désactivée"} onClick={() => updateSettings({ autoSpeak: !settings.autoSpeak })} className={clsx(settings.autoSpeak && "text-violet-300")}>
+        <IconButton label={settings.autoSpeak ? "Lecture auto activée" : "Lecture auto désactivée"} onClick={() => updateSettings({ autoSpeak: !settings.autoSpeak })} className={clsx(settings.autoSpeak && "text-brand")}>
           {settings.autoSpeak ? <Volume2 className="size-5" /> : <VolumeX className="size-5" />}
         </IconButton>
         <IconButton label="Historique" onClick={() => setShowHistory(true)}>
@@ -368,7 +427,7 @@ export default function Coach() {
         {loading && (
           <div className="flex items-center gap-2.5 pl-1">
             <img src="./icon.svg" alt="" className="size-7 rounded-lg" />
-            <div className="rounded-3xl rounded-tl-lg border border-line bg-white/[0.05] px-4 py-3">
+            <div className="rounded-2xl rounded-tl-md border border-line bg-panel px-4 py-3">
               <Spinner label={visible.length ? "Le coach corrige…" : "Le coach arrive…"} />
             </div>
           </div>
@@ -379,14 +438,14 @@ export default function Coach() {
       {/* Saisie */}
       <div className="pb-2 md:pb-4">
         {stt.error && <p className="mb-2 text-xs text-bad">{stt.error}</p>}
-        <div className={clsx("flex items-end gap-2 rounded-3xl border bg-panel/80 p-2 backdrop-blur transition", stt.listening ? "border-brand2/60" : "border-line2")}>
+        <div className={clsx("flex items-end gap-2 rounded-2xl border-2 bg-panel p-1.5 transition-colors", stt.listening ? "border-brand2" : "border-line focus-within:border-ring")}>
           {stt.supported && (
             <button
               onClick={() => (stt.listening ? stt.stop() : stt.start())}
               aria-label={stt.listening ? "Arrêter la dictée" : "Dicter"}
               className={clsx(
-                "flex size-10 shrink-0 items-center justify-center rounded-full transition",
-                stt.listening ? "animate-pulse-ring bg-brand2 text-white" : "bg-white/[0.06] text-muted hover:text-ink"
+                "flex size-11 shrink-0 items-center justify-center rounded-xl transition-colors",
+                stt.listening ? "animate-pulse-ring bg-brand2 text-on-brand2" : "bg-sunk text-muted hover:text-ink"
               )}
             >
               {stt.listening ? <MicOff className="size-5" /> : <Mic className="size-5" />}
@@ -410,7 +469,7 @@ export default function Coach() {
             onClick={send}
             disabled={!input.trim() || loading}
             aria-label="Envoyer"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-white transition active:scale-90 disabled:opacity-30"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand text-on-brand transition active:scale-95 disabled:opacity-30"
           >
             <ArrowUp className="size-5" />
           </button>

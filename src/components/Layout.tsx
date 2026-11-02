@@ -1,34 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import clsx from "clsx";
-import {
-  BookOpenCheck,
-  ChevronDown,
-  Dumbbell,
-  Flame,
-  Home,
-  Languages,
-  Layers,
-  MessageCircle,
-  Mic,
-  MoreHorizontal,
-  Settings,
-  Zap,
-} from "lucide-react";
+import { BookOpenCheck, Check, ChevronDown, Dumbbell, Flame, Home, Languages, Layers, MessageCircle, Mic, MoreHorizontal, Settings, Zap } from "lucide-react";
 import { LANG_LIST, LANGS, type LangCode } from "../lib/languages";
 import { currentStreak, useStore } from "../store/useStore";
 import { Modal } from "./ui";
+import { Flag } from "./Flag";
 
 export const NAV = [
-  { to: "/", label: "Accueil", icon: Home },
-  { to: "/coach", label: "Coach IA", icon: MessageCircle },
-  { to: "/traduire", label: "Traduire", icon: Languages },
-  { to: "/prononciation", label: "Prononciation", icon: Mic },
-  { to: "/argot", label: "Argot & expressions", icon: Zap },
-  { to: "/exercices", label: "Exercices", icon: Dumbbell },
-  { to: "/revision", label: "Révisions", icon: Layers },
-  { to: "/erreurs", label: "Carnet d'erreurs", icon: BookOpenCheck },
-  { to: "/reglages", label: "Réglages", icon: Settings },
+  { to: "/", label: "Accueil", short: "Accueil", icon: Home },
+  { to: "/coach", label: "Coach IA", short: "Coach", icon: MessageCircle },
+  { to: "/traduire", label: "Traduire", short: "Traduire", icon: Languages },
+  { to: "/prononciation", label: "Prononciation", short: "Parler", icon: Mic },
+  { to: "/argot", label: "Argot & expressions", short: "Argot", icon: Zap },
+  { to: "/exercices", label: "Exercices", short: "Exercices", icon: Dumbbell },
+  { to: "/revision", label: "Révisions", short: "Révisions", icon: Layers },
+  { to: "/erreurs", label: "Carnet d'erreurs", short: "Erreurs", icon: BookOpenCheck },
+  { to: "/reglages", label: "Réglages", short: "Réglages", icon: Settings },
 ];
 
 const MOBILE_MAIN = ["/", "/coach", "/traduire", "/prononciation"];
@@ -43,8 +31,8 @@ function useDueCount() {
 export function Logo({ className }: { className?: string }) {
   return (
     <div className={clsx("flex items-center gap-2.5", className)}>
-      <img src="./icon.svg" alt="" className="size-8 rounded-[10px] shadow-lg shadow-fuchsia-500/30" />
-      <span className="font-display text-[26px] leading-none tracking-tight">Verbo</span>
+      <img src="./icon.svg" alt="" className="size-8 rounded-lg" />
+      <span className="text-xl font-extrabold tracking-tight">Verbo</span>
     </div>
   );
 }
@@ -56,13 +44,15 @@ export function LangSwitcher({ compact }: { compact?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const close = (e: MouseEvent) => ref.current && !ref.current.contains(e.target as Node) && setOpen(false);
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
   const choose = (code: LangCode) => {
-    // Si on choisit sa langue maternelle comme cible, on échange les deux.
+    // Choisir sa langue maternelle comme cible : on échange les deux.
     update(code === native ? { target: code, native: target } : { target: code });
     setOpen(false);
   };
@@ -71,35 +61,38 @@ export function LangSwitcher({ compact }: { compact?: boolean }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`Langue apprise : ${LANGS[target].name}`}
         className={clsx(
-          "flex items-center gap-2 rounded-xl border border-line bg-white/[0.04] transition hover:bg-white/[0.08]",
-          compact ? "px-2.5 py-1.5" : "w-full px-3 py-2.5"
+          "flex min-h-11 items-center gap-2.5 rounded-xl border border-line bg-panel transition-colors duration-150 hover:bg-sunk",
+          compact ? "px-3" : "w-full px-3 py-2"
         )}
       >
-        <span className="text-lg leading-none">{LANGS[target].flag}</span>
+        <Flag code={target} className="text-lg" />
         {!compact && (
-          <span className="flex-1 text-left">
-            <span className="block text-sm font-medium">{LANGS[target].name}</span>
-            <span className="block text-[11px] text-faint">depuis le {LANGS[native].name.toLowerCase()}</span>
+          <span className="flex-1 text-left leading-tight">
+            <span className="block text-sm font-semibold">{LANGS[target].name}</span>
+            <span className="block text-xs text-faint">depuis le {LANGS[native].name.toLowerCase()}</span>
           </span>
         )}
-        <ChevronDown className="size-4 text-muted" />
+        <ChevronDown className="size-4 text-muted" aria-hidden />
       </button>
       {open && (
-        <div className={clsx("absolute z-40 mt-2 min-w-52 rounded-2xl border border-line2 bg-panel2 p-1.5 shadow-2xl animate-pop", compact ? "right-0" : "inset-x-0")}>
-          <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-faint">J'apprends</p>
+        <div role="listbox" className={clsx("absolute z-40 mt-2 min-w-56 rounded-xl border border-line bg-panel2 p-1.5 animate-pop", compact ? "right-0" : "inset-x-0")}>
+          <p className="eyebrow px-3 pb-1 pt-2">J'apprends</p>
           {LANG_LIST.map((l) => (
             <button
               key={l.code}
+              role="option"
+              aria-selected={l.code === target}
               onClick={() => choose(l.code)}
-              className={clsx(
-                "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm transition hover:bg-white/[0.06]",
-                l.code === target && "bg-white/[0.08]"
-              )}
+              className={clsx("flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm transition-colors hover:bg-sunk", l.code === target && "bg-sunk font-semibold")}
             >
-              <span className="text-lg">{l.flag}</span>
+              <Flag code={l.code} className="text-base" />
               <span className="flex-1 text-left">{l.name}</span>
-              {l.code === native && <span className="text-[10px] text-faint">ta langue</span>}
+              {l.code === native && <span className="text-xs text-faint">ta langue</span>}
+              {l.code === target && <Check className="size-4 text-brand" aria-hidden />}
             </button>
           ))}
         </div>
@@ -112,11 +105,18 @@ function StreakChip() {
   const progress = useStore((s) => s.progress);
   const streak = currentStreak(progress);
   return (
-    <div className={clsx("flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-sm font-semibold", streak ? "bg-orange-500/15 text-orange-300" : "bg-white/[0.05] text-faint")}>
-      <Flame className={clsx("size-4", streak && "fill-orange-400/40")} />
+    <div
+      title={`Série : ${streak} jour${streak > 1 ? "s" : ""}`}
+      className={clsx("flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-sm font-bold", streak ? "bg-brand2-soft text-brand2" : "bg-sunk text-faint")}
+    >
+      <Flame className="size-4" aria-hidden />
       {streak}
     </div>
   );
+}
+
+function CountBadge({ n }: { n: number }) {
+  return <span className="min-w-5 rounded-md bg-brand2 px-1.5 text-center text-xs font-bold leading-5 text-on-brand2">{n}</span>;
 }
 
 export default function Layout() {
@@ -135,10 +135,10 @@ export default function Layout() {
   return (
     <div className="min-h-dvh">
       {/* ── Barre latérale (ordinateur) ── */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-bg/60 px-4 py-6 backdrop-blur-xl md:flex">
-        <Logo className="mb-6 px-2" />
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-line bg-panel px-4 py-5 md:flex">
+        <Logo className="mb-5 px-2" />
         <LangSwitcher />
-        <nav className="mt-5 flex flex-1 flex-col gap-0.5 overflow-y-auto">
+        <nav className="no-scrollbar mt-4 flex flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Navigation principale">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -146,34 +146,27 @@ export default function Layout() {
               end={to === "/"}
               className={({ isActive }) =>
                 clsx(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition",
-                  isActive ? "bg-white/[0.08] text-ink" : "text-muted hover:bg-white/[0.04] hover:text-ink"
+                  "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors duration-150",
+                  isActive ? "bg-brand-soft text-brand" : "text-muted hover:bg-sunk hover:text-ink"
                 )
               }
             >
-              {({ isActive }) => (
-                <>
-                  <Icon className={clsx("size-[18px]", isActive ? "text-violet-300" : "text-faint group-hover:text-muted")} />
-                  <span className="flex-1">{label}</span>
-                  {to === "/revision" && due > 0 && (
-                    <span className="rounded-full bg-brand-gradient px-1.5 text-[11px] font-bold text-white">{due}</span>
-                  )}
-                </>
-              )}
+              <Icon className="size-[18px]" aria-hidden />
+              <span className="flex-1">{label}</span>
+              {to === "/revision" && due > 0 && <CountBadge n={due} />}
             </NavLink>
           ))}
         </nav>
-        <div className="mt-4 flex items-center justify-between rounded-2xl border border-line bg-white/[0.03] px-3 py-2.5">
+        <div className="mt-4 flex items-center justify-between rounded-xl bg-sunk px-3 py-2.5">
           <StreakChip />
-          <div className="text-right">
-            <p className="text-sm font-semibold">{xp.toLocaleString("fr-FR")} XP</p>
-            <p className="text-[11px] text-faint">total</p>
-          </div>
+          <p className="text-sm font-bold">
+            {xp.toLocaleString("fr-FR")} <span className="font-medium text-faint">XP</span>
+          </p>
         </div>
       </aside>
 
       {/* ── En-tête (mobile) ── */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-bg/75 px-4 backdrop-blur-xl md:hidden">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-panel px-4 md:hidden">
         <Logo />
         <div className="flex items-center gap-2">
           <StreakChip />
@@ -188,33 +181,31 @@ export default function Layout() {
       </main>
 
       {/* ── Barre d'onglets (mobile) ── */}
-      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/85 backdrop-blur-xl md:hidden">
+      <nav className="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-panel md:hidden" aria-label="Navigation">
         <div className="grid h-16 grid-cols-5">
-          {NAV.filter((n) => MOBILE_MAIN.includes(n.to)).map(({ to, label, icon: Icon }) => (
+          {NAV.filter((n) => MOBILE_MAIN.includes(n.to)).map(({ to, short, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={to === "/"}
-              className={({ isActive }) =>
-                clsx("flex flex-col items-center justify-center gap-1 text-[10px] font-medium transition", isActive ? "text-ink" : "text-faint")
-              }
+              className={({ isActive }) => clsx("flex flex-col items-center justify-center gap-0.5 text-xs font-semibold transition-colors", isActive ? "text-brand" : "text-faint")}
             >
               {({ isActive }) => (
                 <>
-                  <span className={clsx("flex h-7 w-12 items-center justify-center rounded-full transition", isActive && "bg-white/[0.1]")}>
-                    <Icon className={clsx("size-5", isActive && "text-violet-300")} />
+                  <span className={clsx("flex h-7 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-brand-soft")}>
+                    <Icon className="size-5" aria-hidden />
                   </span>
-                  {label.split(" ")[0]}
+                  {short}
                 </>
               )}
             </NavLink>
           ))}
-          <button onClick={() => setMore(true)} className="relative flex flex-col items-center justify-center gap-1 text-[10px] font-medium text-faint">
-            <span className="flex h-7 w-12 items-center justify-center">
-              <MoreHorizontal className="size-5" />
+          <button onClick={() => setMore(true)} className="relative flex flex-col items-center justify-center gap-0.5 text-xs font-semibold text-faint">
+            <span className="flex h-7 w-14 items-center justify-center">
+              <MoreHorizontal className="size-5" aria-hidden />
             </span>
             Plus
-            {due > 0 && <span className="absolute right-4 top-2 size-2 rounded-full bg-brand2" />}
+            {due > 0 && <span className="absolute right-4 top-2 size-2 rounded-full bg-brand2" aria-label={`${due} cartes à réviser`} />}
           </button>
         </div>
       </nav>
@@ -222,10 +213,10 @@ export default function Layout() {
       <Modal open={more} onClose={() => setMore(false)} title="Plus">
         <div className="grid grid-cols-2 gap-2">
           {NAV.filter((n) => !MOBILE_MAIN.includes(n.to)).map(({ to, label, icon: Icon }) => (
-            <NavLink key={to} to={to} className="flex items-center gap-3 rounded-2xl border border-line bg-white/[0.03] p-4 text-sm font-medium active:scale-[0.98]">
-              <Icon className="size-5 text-violet-300" />
+            <NavLink key={to} to={to} className="flex min-h-14 items-center gap-3 rounded-xl border border-line bg-panel p-3 text-sm font-semibold active:scale-[0.98]">
+              <Icon className="size-5 text-brand" aria-hidden />
               <span className="flex-1">{label}</span>
-              {to === "/revision" && due > 0 && <span className="rounded-full bg-brand-gradient px-1.5 text-[11px] font-bold text-white">{due}</span>}
+              {to === "/revision" && due > 0 && <CountBadge n={due} />}
             </NavLink>
           ))}
         </div>

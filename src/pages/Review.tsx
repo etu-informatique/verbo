@@ -11,7 +11,7 @@ const GRADES: { g: Grade; label: string; cls: string }[] = [
   { g: 0, label: "À revoir", cls: "border-bad/40 text-bad hover:bg-bad/10" },
   { g: 1, label: "Difficile", cls: "border-warn/40 text-warn hover:bg-warn/10" },
   { g: 2, label: "Bien", cls: "border-ok/40 text-ok hover:bg-ok/10" },
-  { g: 3, label: "Facile", cls: "border-sky-400/40 text-sky-300 hover:bg-sky-400/10" },
+  { g: 3, label: "Facile", cls: "border-brand/40 text-brand hover:bg-brand-soft" },
 ];
 
 function Session({ cards, onExit }: { cards: CardT[]; onExit: () => void }) {
@@ -29,7 +29,7 @@ function Session({ cards, onExit }: { cards: CardT[]; onExit: () => void }) {
     return (
       <Card className="flex flex-col items-center gap-3 py-12 text-center animate-pop">
         <CheckCircle2 className="size-12 text-ok" />
-        <p className="font-display text-4xl">Session terminée</p>
+        <p className="font-extrabold tracking-tight text-4xl">Session terminée</p>
         <p className="text-muted">{count} cartes révisées. Reviens demain pour la suite.</p>
         <Button variant="primary" onClick={onExit}>
           Retour
@@ -58,8 +58,8 @@ function Session({ cards, onExit }: { cards: CardT[]; onExit: () => void }) {
         <button onClick={onExit} className="text-sm text-muted hover:text-ink">
           Quitter
         </button>
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-          <div className="h-full bg-brand-gradient transition-all" style={{ width: `${(count / (count + queue.length)) * 100}%` }} />
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-sunk">
+          <div className="h-full bg-brand transition-all" style={{ width: `${(count / (count + queue.length)) * 100}%` }} />
         </div>
         <span className="text-sm text-faint">{queue.length} restantes</span>
       </div>
@@ -82,15 +82,15 @@ function Session({ cards, onExit }: { cards: CardT[]; onExit: () => void }) {
           className={clsx("flip-inner relative min-h-72 cursor-pointer", flipped && "flipped")}
           onClick={() => mode === "reco" && setFlipped(!flipped)}
         >
-          <div className="flip-face glass absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+          <div className="flip-face card absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
             <Badge className="absolute left-4 top-4">{card.source}</Badge>
-            <p className="font-display text-3xl leading-snug md:text-4xl">{prompt}</p>
+            <p className="font-extrabold tracking-tight text-3xl leading-snug md:text-4xl">{prompt}</p>
             {mode === "reco" && <SpeakButton text={card.front} lang={card.lang} className="mt-4" />}
             {mode === "reco" && <p className="absolute bottom-4 text-xs text-faint">Touche pour retourner</p>}
           </div>
-          <div className="flip-face flip-back glass absolute inset-0 flex flex-col items-center justify-center overflow-y-auto p-6 text-center">
+          <div className="flip-face flip-back card absolute inset-0 flex flex-col items-center justify-center overflow-y-auto p-6 text-center">
             <p className="text-sm text-faint">{prompt}</p>
-            <p className="mt-3 font-display text-3xl leading-snug md:text-4xl">{answer}</p>
+            <p className="mt-3 font-extrabold tracking-tight text-3xl leading-snug md:text-4xl">{answer}</p>
             {mode === "ecrit" && <SpeakButton text={card.front} lang={card.lang} className="mt-3" />}
             {card.note && <p className="mt-4 whitespace-pre-line text-sm text-muted">{card.note}</p>}
           </div>
@@ -120,9 +120,9 @@ function Session({ cards, onExit }: { cards: CardT[]; onExit: () => void }) {
       {flipped ? (
         <div className="mt-5 grid grid-cols-4 gap-2 animate-fade-up">
           {GRADES.map(({ g, label, cls }) => (
-            <button key={g} onClick={() => grade(g)} className={clsx("flex flex-col items-center rounded-2xl border bg-white/[0.02] py-3 text-sm font-medium transition active:scale-95", cls)}>
+            <button key={g} onClick={() => grade(g)} className={clsx("flex flex-col items-center rounded-2xl border bg-sunk py-3 text-sm font-medium transition active:scale-95", cls)}>
               {label}
-              <span className="mt-0.5 text-[11px] opacity-70">{previewInterval(card, g)}</span>
+              <span className="mt-0.5 text-xs opacity-70">{previewInterval(card, g)}</span>
             </button>
           ))}
         </div>
@@ -222,9 +222,8 @@ export default function Review() {
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="relative overflow-hidden md:col-span-2">
-              <div className="pointer-events-none absolute -right-12 -top-12 size-48 rounded-full bg-indigo-500/20 blur-3xl" />
               <p className="text-sm text-muted">À réviser maintenant</p>
-              <p className="mt-1 font-display text-7xl">{due.length}</p>
+              <p className="mt-1 font-extrabold tracking-tight text-7xl">{due.length}</p>
               <p className="mt-1 text-sm text-faint">
                 {due.length ? "cartes t'attendent." : nextDue ? `Prochaine carte ${new Date(nextDue.due).toLocaleString("fr-FR", { weekday: "long", hour: "2-digit", minute: "2-digit" })}.` : ""}
               </p>
@@ -243,7 +242,7 @@ export default function Review() {
               <p className="text-sm font-semibold">Ta mémoire</p>
               <ul className="mt-4 space-y-3 text-sm">
                 {[
-                  { l: "Nouvelles", v: mine.filter((c) => c.reps === 0).length, c: "bg-sky-400" },
+                  { l: "Nouvelles", v: mine.filter((c) => c.reps === 0).length, c: "bg-brand" },
                   { l: "En apprentissage", v: mine.filter((c) => c.reps > 0 && c.interval < 21).length, c: "bg-warn" },
                   { l: "Maîtrisées (21 j+)", v: mine.filter((c) => c.interval >= 21).length, c: "bg-ok" },
                 ].map((r) => (

@@ -1,14 +1,17 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { LangCode, Level } from "../lib/languages";
+import type { Engine } from "../lib/ai";
 import { newSrs, schedule, type Grade, type SrsState } from "../lib/srs";
 
 export type Strictness = 1 | 2 | 3;
-export type ModelId = "claude-opus-5-5" | "claude-sonnet-5-5" | "claude-haiku-5-5";
 
 export interface Settings {
-  apiKey: string;
-  model: ModelId;
+  engine: Engine;
+  localModel: string;
+  localDownloaded: string[]; // modèles locaux déjà téléchargés sur cet appareil
+  puterConnected: boolean;
+  theme: "auto" | "light" | "dark";
   target: LangCode;
   native: LangCode;
   level: Level;
@@ -127,8 +130,11 @@ function yesterdayKey(): string {
 }
 
 const defaultSettings: Settings = {
-  apiKey: "",
-  model: "claude-opus-5-5",
+  engine: "auto",
+  localModel: "Qwen3-1.7B-q4f16_1-MLC",
+  localDownloaded: [],
+  puterConnected: false,
+  theme: "auto",
   target: "en",
   native: "fr",
   level: "B1",
@@ -241,7 +247,7 @@ export const useStore = create<State>()(
         const data = JSON.parse(json);
         if (!data || typeof data !== "object" || !data.settings) throw new Error("Fichier invalide");
         set({
-          settings: { ...defaultSettings, ...data.settings },
+          settings: { ...defaultSettings, ...data.settings, onboarded: true },
           progress: { ...defaultProgress, ...data.progress },
           cards: data.cards ?? [],
           mistakes: data.mistakes ?? [],
@@ -250,15 +256,32 @@ export const useStore = create<State>()(
       },
 
       resetAll: () =>
-        set((s) => ({
-          settings: { ...defaultSettings, apiKey: s.settings.apiKey },
+        set(() => ({
+          settings: { ...defaultSettings, onboarded: true },
           progress: defaultProgress,
           cards: [],
           mistakes: [],
           chats: [],
         })),
     }),
-    { name: "verbo-store", version: 1 }
+    {
+      name: "verbo-store",
+      version: 3,
+      // v1 → v3 : plus de clé API, moteur d'IA gratuit « auto » par défaut
+      migrate: (persisted) => {
+        const st = persisted as { settings?: Record<string, unknown> };
+        if (st?.settings) {
+          delete st.settings.apiKey;
+          delete st.settings.model;
+          if (!["auto", "cloud", "local", "puter"].includes(String(st.settings.engine))) st.settings.engine = "auto";
+        }
+        return st as unknown as State;
+      },
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<State>;
+        return { ...current, ...p, settings: { ...current.settings, ...p.settings }, progress: { ...current.progress, ...p.progress } };
+      },
+    }
   )
 );
 

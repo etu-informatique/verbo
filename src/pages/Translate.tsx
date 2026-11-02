@@ -1,13 +1,14 @@
 import { useState } from "react";
 import clsx from "clsx";
 import { ArrowLeftRight, BookmarkPlus, Copy, FileCheck2, Languages, Mic, MicOff, Sparkles } from "lucide-react";
-import { askJson, friendlyError } from "../lib/claude";
-import { correctorSchema, correctorSystem, translateSchema, translateSystem } from "../lib/prompts";
+import { askJson, friendlyError } from "../lib/ai";
+import { correctorSchemaFor, correctorSystem, translateSchema, translateSystem } from "../lib/prompts";
 import { LANG_LIST, LANGS, type LangCode } from "../lib/languages";
 import { useSpeechRecognition } from "../lib/speech";
 import { useStore, type Correction } from "../store/useStore";
 import { Badge, Button, Card, ErrorBox, PageHeader, Segmented, SpeakButton, Spinner, toast } from "../components/ui";
 import { CorrectionView } from "../components/Correction";
+import { Flag } from "../components/Flag";
 
 interface TranslateResult {
   detected: string;
@@ -34,7 +35,7 @@ const REGISTER_TONE: Record<string, "neutral" | "brand" | "warn" | "bad"> = {
 };
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-faint">{children}</h3>;
+  return <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-faint">{children}</h3>;
 }
 
 // ───────────────────────────── Traduction ─────────────────────────────
@@ -95,20 +96,20 @@ function Translator() {
       <Card className="p-0">
         <div className="flex items-center gap-2 border-b border-line p-3">
           <select className="field !w-auto flex-1 !py-2" value={from} onChange={(e) => setFrom(e.target.value as LangCode | "auto")}>
-            <option value="auto">🌐 Détecter</option>
+            <option value="auto">Détecter la langue</option>
             {LANG_LIST.map((l) => (
               <option key={l.code} value={l.code}>
-                {l.flag} {l.name}
+                {l.name}
               </option>
             ))}
           </select>
-          <button onClick={swap} disabled={from === "auto"} aria-label="Inverser" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-muted transition hover:rotate-180 hover:text-ink disabled:opacity-30">
+          <button onClick={swap} disabled={from === "auto"} aria-label="Inverser" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-sunk text-muted transition-colors hover:text-ink disabled:opacity-30">
             <ArrowLeftRight className="size-4" />
           </button>
           <select className="field !w-auto flex-1 !py-2" value={to} onChange={(e) => setTo(e.target.value as LangCode)}>
             {LANG_LIST.map((l) => (
               <option key={l.code} value={l.code}>
-                {l.flag} {l.name}
+                {l.name}
               </option>
             ))}
           </select>
@@ -128,7 +129,7 @@ function Translator() {
             <button
               onClick={dictate}
               aria-label="Dicter"
-              className={clsx("flex size-10 items-center justify-center rounded-full transition", stt.listening ? "animate-pulse-ring bg-brand2 text-white" : "bg-white/[0.06] text-muted hover:text-ink")}
+              className={clsx("flex size-11 items-center justify-center rounded-xl transition-colors", stt.listening ? "animate-pulse-ring bg-brand2 text-on-brand2" : "bg-sunk text-muted hover:text-ink")}
             >
               {stt.listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
             </button>
@@ -153,14 +154,13 @@ function Translator() {
         <div className={clsx("space-y-5 transition", loading && "opacity-50")}>
           {/* Traduction principale */}
           <Card className="relative overflow-hidden animate-fade-up">
-            <div className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-violet-500/15 blur-3xl" />
             <div className="flex items-center gap-2">
               <Badge tone="brand">
-                {LANGS[to].flag} {LANGS[to].name}
+                <Flag code={to} /> {LANGS[to].name}
               </Badge>
               {from === "auto" && <Badge>détecté : {res.detected}</Badge>}
             </div>
-            <p className="mt-3 font-display text-3xl leading-snug md:text-4xl">{res.translation}</p>
+            <p className="mt-3 font-extrabold tracking-tight text-3xl leading-snug md:text-4xl">{res.translation}</p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <SpeakButton text={res.translation} lang={to} />
               <SpeakButton text={res.translation} lang={to} rate={0.6} />
@@ -190,23 +190,23 @@ function Translator() {
                   onClick={() => setSelected(selected === i ? null : i)}
                   className={clsx(
                     "flex min-w-14 flex-col items-center rounded-xl border px-3 py-2 text-center transition",
-                    selected === i ? "border-brand/70 bg-brand/15" : "border-line bg-white/[0.03] hover:bg-white/[0.07]"
+                    selected === i ? "border-brand bg-brand-soft" : "border-line bg-sunk hover:bg-sunk"
                   )}
                 >
                   <span className="text-[15px] font-medium">{a.source}</span>
                   <span className="mt-1 h-px w-full bg-line2" />
-                  <span className={clsx("mt-1 text-sm", a.target === "∅" ? "text-faint" : "text-violet-300")}>{a.target}</span>
+                  <span className={clsx("mt-1 text-sm", a.target === "∅" ? "text-faint" : "text-brand")}>{a.target}</span>
                 </button>
               ))}
             </div>
             {selected !== null && res.alignment[selected]?.note && (
-              <p className="mt-3 rounded-xl bg-black/25 p-3 text-sm text-muted animate-fade-up">
+              <p className="mt-3 rounded-xl bg-sunk p-3 text-sm text-muted animate-fade-up">
                 <span className="font-semibold text-ink">{res.alignment[selected].source}</span> — {res.alignment[selected].note}
               </p>
             )}
             {res.literal && (
               <div className="mt-4 rounded-xl border border-dashed border-line2 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-faint">Traduction littérale</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-faint">Traduction littérale</p>
                 <p className="mt-1 text-sm italic text-muted">{res.literal}</p>
               </div>
             )}
@@ -247,7 +247,7 @@ function Translator() {
                         <p className="mt-0.5 text-xs italic text-faint">{v.example}</p>
                       </div>
                       <SpeakButton text={v.term} lang={to} size="sm" />
-                      <button onClick={() => save(v.term, v.translation, v.example)} aria-label="Ajouter aux révisions" className="flex size-7 items-center justify-center rounded-full bg-white/[0.06] text-violet-300 hover:bg-white/[0.12]">
+                      <button onClick={() => save(v.term, v.translation, v.example)} aria-label="Ajouter aux révisions" className="flex size-9 items-center justify-center rounded-lg bg-sunk text-brand hover:bg-brand-soft">
                         <BookmarkPlus className="size-3.5" />
                       </button>
                     </li>
@@ -312,7 +312,7 @@ function Corrector() {
       const r = await askJson<CorrectorResult>({
         system: correctorSystem(lang, settings.native, settings.level, settings.strictness),
         messages: [{ role: "user", content: text.trim() }],
-        schema: correctorSchema,
+        schema: correctorSchemaFor(lang, settings.native),
         effort: "medium",
       });
       setRes(r);
@@ -350,7 +350,7 @@ function Corrector() {
         <div className="space-y-5 animate-fade-up">
           <Card>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex size-14 items-center justify-center rounded-2xl bg-brand-gradient text-xl font-bold text-white">{res.cefr}</div>
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-brand text-xl font-bold text-on-brand">{res.cefr}</div>
               <div className="flex-1">
                 <p className="text-sm font-semibold">Niveau démontré par ce texte</p>
                 <p className="text-sm text-muted">{res.feedback}</p>

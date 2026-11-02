@@ -18,12 +18,12 @@ export const STRICTNESS_LABELS: Record<Strictness, { name: string; desc: string 
 
 // ───────────────────────────── Coach ─────────────────────────────
 
-export const MODE_INFO: Record<ChatMode, { name: string; desc: string; emoji: string }> = {
-  libre: { name: "Conversation", desc: "Discute de tout, le coach corrige chaque message.", emoji: "💬" },
-  debat: { name: "Débat", desc: "Le coach défend l'avis contraire et te pousse dans tes retranchements.", emoji: "⚔️" },
-  role: { name: "Jeu de rôle", desc: "Situations réelles : restaurant, entretien, aéroport…", emoji: "🎭" },
-  examen: { name: "Test de niveau", desc: "Évaluation CECR (A1 → C2) en une dizaine d'échanges.", emoji: "🎯" },
-  prof: { name: "Prof particulier", desc: "Pose tes questions de grammaire ou de vocabulaire.", emoji: "🎓" },
+export const MODE_INFO: Record<ChatMode, { name: string; desc: string }> = {
+  libre: { name: "Conversation", desc: "Discute de tout, le coach corrige chaque message." },
+  debat: { name: "Débat", desc: "Le coach défend l'avis contraire et te pousse dans tes retranchements." },
+  role: { name: "Jeu de rôle", desc: "Situations réelles : restaurant, entretien, aéroport…" },
+  examen: { name: "Test de niveau", desc: "Évaluation CECR (A1 → C2) en une dizaine d'échanges." },
+  prof: { name: "Prof particulier", desc: "Pose tes questions de grammaire ou de vocabulaire." },
 };
 
 export const START_TOKEN = "<<START>>";
@@ -67,30 +67,39 @@ For every learner message you return JSON with two parts:
 2. "reply" — your answer, in ${T} (except tutor mode). Adapt vocabulary and grammar to ${c.level}, slightly above to make the learner progress. 1 to 4 sentences, conversational, end with a question or prompt that makes them answer. Use real everyday expressions (idioms, common slang that's understood everywhere) when it fits the level, not only textbook ${T}.
    "replyTranslation" — faithful translation of "reply" into ${N}.
 
-Never be sycophantic. Never repeat the correction inside "reply" — corrections go only in "correction".`;
+Never be sycophantic. Never repeat the correction inside "reply" — corrections go only in "correction".
+
+LANGUAGE RULE (critical): ${c.mode === "prof" ? `"reply" is written in ${N}` : `"reply" is written ONLY in ${T}, never in ${N}`}; "replyTranslation" is written in ${c.mode === "prof" ? T : N}; every "explanation" and "tip" is written in ${N}; "corrected" and "natural" are written in ${T}.`;
 }
 
-const errorSchema = obj({
-  wrong: str(),
-  right: str(),
-  type: str(),
-  explanation: str(),
-});
+/** Schéma de correction : chaque champ précise sa langue (aide beaucoup les petits modèles). */
+export function correctionSchemaFor(target: LangCode, native: LangCode) {
+  const T = LANG_EN_NAME[target];
+  const N = LANG_EN_NAME[native];
+  return obj({
+    isCorrect: bool(),
+    score: num("0-100, or -1 when not applicable"),
+    corrected: str(`the learner's ${T} text with only the errors fixed, written in ${T}`),
+    natural: str(`how a native speaker would say it, written in ${T}`),
+    errors: arr(
+      obj({
+        wrong: str(`the exact wrong fragment copied from the learner's ${T} text`),
+        right: str(`the corrected fragment, in ${T}`),
+        type: str("one of: grammaire, conjugaison, vocabulaire, orthographe, accents, ponctuation, ordre des mots, registre, naturel, faux ami"),
+        explanation: str(`the rule, explained in ${N}`),
+      })
+    ),
+    tip: str(`one actionable tip, in ${N}, or empty string`),
+  });
+}
 
-export const correctionSchema = obj({
-  isCorrect: bool(),
-  score: num("0-100, or -1 when not applicable"),
-  corrected: str(),
-  natural: str(),
-  errors: arr(errorSchema),
-  tip: str(),
-});
-
-export const coachSchema = obj({
-  correction: correctionSchema,
-  reply: str(),
-  replyTranslation: str(),
-});
+export function coachSchemaFor(target: LangCode, native: LangCode) {
+  return obj({
+    correction: correctionSchemaFor(target, native),
+    reply: str(`your conversational answer, written in ${LANG_EN_NAME[target]}`),
+    replyTranslation: str(`translation of reply, written in ${LANG_EN_NAME[native]}`),
+  });
+}
 
 // ───────────────────────────── Traduction ─────────────────────────────
 
@@ -133,11 +142,13 @@ Return:
 - "feedback": 2-4 sentences of frank overall feedback in ${N} (coherence, richness of vocabulary, sentence variety).`;
 }
 
-export const correctorSchema = obj({
-  correction: correctionSchema,
-  cefr: str(),
-  feedback: str(),
-});
+export function correctorSchemaFor(target: LangCode, native: LangCode) {
+  return obj({
+    correction: correctionSchemaFor(target, native),
+    cefr: str("A1, A2, B1, B2, C1 or C2"),
+    feedback: str(`2-4 sentences in ${LANG_EN_NAME[native]}`),
+  });
+}
 
 // ───────────────────────────── Prononciation ─────────────────────────────
 
@@ -162,12 +173,12 @@ export const pronSchema = obj({
 
 export type ExerciseKind = "qcm" | "trou" | "traduire" | "ordre" | "dictee";
 
-export const EXERCISE_INFO: Record<ExerciseKind, { name: string; desc: string; emoji: string }> = {
-  qcm: { name: "QCM", desc: "Choisis la bonne réponse", emoji: "🔘" },
-  trou: { name: "Texte à trous", desc: "Complète la phrase", emoji: "✏️" },
-  traduire: { name: "Traduction", desc: "Traduis vers la langue cible", emoji: "🔁" },
-  ordre: { name: "Remettre en ordre", desc: "Reconstruis la phrase", emoji: "🧩" },
-  dictee: { name: "Dictée", desc: "Écoute et écris", emoji: "🎧" },
+export const EXERCISE_INFO: Record<ExerciseKind, { name: string; desc: string }> = {
+  qcm: { name: "QCM", desc: "Choisis la bonne réponse" },
+  trou: { name: "Texte à trous", desc: "Complète la phrase" },
+  traduire: { name: "Traduction", desc: "Traduis vers la langue cible" },
+  ordre: { name: "Remettre en ordre", desc: "Reconstruis la phrase" },
+  dictee: { name: "Dictée", desc: "Écoute et écris" },
 };
 
 export function exercisesSystem(target: LangCode, native: LangCode, level: Level): string {

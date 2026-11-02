@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import clsx from "clsx";
-import { AlertTriangle, ChevronLeft, ChevronRight, Ear, Mic, Sparkles, Square, Wand2 } from "lucide-react";
-import { askJson, friendlyError } from "../lib/claude";
+import { AlertTriangle, ArrowRight, Target, ChevronLeft, ChevronRight, Ear, Mic, Sparkles, Square, Wand2 } from "lucide-react";
+import { askJson, friendlyError } from "../lib/ai";
 import { pronSchema, pronSystem } from "../lib/prompts";
 import { LANGS, LEVELS, type Level } from "../lib/languages";
 import { scorePronunciation, type PronResult } from "../lib/score";
@@ -138,15 +138,14 @@ export default function Pronounce() {
         <div className="space-y-5 lg:col-span-3">
           {/* ── Phrase à prononcer ── */}
           <Card className="relative overflow-hidden p-6 md:p-8">
-            <div className="pointer-events-none absolute -left-16 -top-16 size-56 rounded-full bg-rose-500/15 blur-3xl" />
             {mode === "liste" && phrase ? (
               <div key={phrase.text} className="relative animate-fade-up">
                 <div className="flex items-center gap-2">
                   <Badge tone="brand">{phrase.level}</Badge>
-                  <Badge>🎯 {phrase.focus}</Badge>
+                  <Badge><Target className="size-3.5" aria-hidden /> {phrase.focus}</Badge>
                   {progress.pronBest[phrase.text] !== undefined && <Badge tone={progress.pronBest[phrase.text] >= 85 ? "ok" : "warn"}>record {progress.pronBest[phrase.text]}</Badge>}
                 </div>
-                <p className="mt-5 font-display text-3xl leading-snug md:text-4xl">{phrase.text}</p>
+                <p className="mt-5 font-extrabold tracking-tight text-3xl leading-snug md:text-4xl">{phrase.text}</p>
                 <p className="mt-2 text-sm text-muted">{phrase.tr}</p>
               </div>
             ) : (
@@ -168,7 +167,7 @@ export default function Pronounce() {
               <SpeakButton text={target} lang={lang} />
               <SpeakButton text={target} lang={lang} rate={0.6} />
               <label className="ml-1 flex cursor-pointer items-center gap-2 text-sm text-muted">
-                <input type="checkbox" checked={shadow} onChange={(e) => setShadow(e.target.checked)} className="accent-violet-500" />
+                <input type="checkbox" checked={shadow} onChange={(e) => setShadow(e.target.checked)} className="accent-[var(--brand)]" />
                 <Ear className="size-4" /> Shadowing
               </label>
               {mode === "liste" && (
@@ -194,11 +193,11 @@ export default function Pronounce() {
               disabled={!target || !stt.supported}
               aria-label={stt.listening ? "Arrêter" : "Enregistrer"}
               className={clsx(
-                "flex size-24 items-center justify-center rounded-full text-white shadow-2xl transition active:scale-95 disabled:opacity-40",
-                stt.listening ? "animate-pulse-ring bg-brand2" : "bg-brand-gradient shadow-fuchsia-500/30 hover:scale-105"
+                "flex size-24 items-center justify-center rounded-full text-on-brand transition active:scale-95 disabled:opacity-40",
+                stt.listening ? "animate-pulse-ring bg-brand2" : "bg-brand hover:scale-105"
               )}
             >
-              {stt.listening ? <Square className="size-8 fill-white" /> : <Mic className="size-10" />}
+              {stt.listening ? <Square className="size-8 fill-current" /> : <Mic className="size-10" />}
             </button>
             <p className="h-5 text-sm text-muted">
               {stt.listening ? stt.interim || "Je t'écoute…" : shadow ? "Écoute puis répète aussitôt" : "Appuie et lis la phrase"}
@@ -234,7 +233,7 @@ export default function Pronounce() {
                     )}
                   >
                     {v.word}
-                    {v.heard && <span className="ml-1 text-[11px] opacity-70">({v.heard})</span>}
+                    {v.heard && <span className="ml-1 text-xs opacity-70">({v.heard})</span>}
                   </span>
                 ))}
                 {result.extra.map((w, i) => (
@@ -243,7 +242,7 @@ export default function Pronounce() {
                   </span>
                 ))}
               </div>
-              <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-faint">
+              <div className="mt-4 flex flex-wrap gap-2 text-xs text-faint">
                 <span className="text-ok">■ correct</span>
                 <span className="text-warn">■ approximatif</span>
                 <span className="text-bad">■ mal compris / oublié</span>
@@ -282,27 +281,27 @@ export default function Pronounce() {
           {feedback && (
             <Card className="space-y-4 animate-fade-up">
               <p className="flex gap-2 font-medium">
-                <Sparkles className="mt-0.5 size-4 shrink-0 text-violet-300" />
+                <Sparkles className="mt-0.5 size-4 shrink-0 text-brand" />
                 {feedback.verdict}
               </p>
               {feedback.stress && (
-                <div className="rounded-xl bg-black/25 p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-faint">Accentuation & liaisons</p>
+                <div className="rounded-xl bg-sunk p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-faint">Accentuation & liaisons</p>
                   <p className="mt-1 font-mono text-sm tracking-wide">{feedback.stress}</p>
                 </div>
               )}
               <ul className="space-y-3">
                 {feedback.tips.map((t, i) => (
                   <li key={i} className="rounded-xl border border-line p-3">
-                    <p className="font-semibold text-violet-300">{t.sound}</p>
+                    <p className="font-semibold text-brand">{t.sound}</p>
                     <p className="mt-1 text-sm text-muted">{t.problem}</p>
-                    <p className="mt-1 text-sm">👉 {t.howTo}</p>
+                    <p className="mt-1 flex gap-1.5 text-sm"><ArrowRight className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />{t.howTo}</p>
                   </li>
                 ))}
               </ul>
               {feedback.drills.length > 0 && (
                 <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-faint">Exercices ciblés</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-faint">Exercices ciblés</p>
                   <div className="flex flex-wrap gap-2">
                     {feedback.drills.map((d) => (
                       <button
@@ -312,7 +311,7 @@ export default function Pronounce() {
                           setCustom(d);
                           reset();
                         }}
-                        className="rounded-full border border-line bg-white/[0.04] px-3 py-1.5 text-sm transition hover:border-brand/50"
+                        className="rounded-lg border border-line bg-sunk px-3 min-h-9 py-1 text-sm transition hover:border-brand"
                       >
                         {d}
                       </button>
@@ -327,7 +326,7 @@ export default function Pronounce() {
         {/* ── Liste ── */}
         {mode === "liste" && (
           <Card className="h-fit p-3 lg:col-span-2">
-            <p className="px-2 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-wider text-faint">Bibliothèque</p>
+            <p className="px-2 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-faint">Bibliothèque</p>
             <ul className="max-h-[60vh] space-y-1 overflow-y-auto">
               {list.map((p, i) => {
                 const best = progress.pronBest[p.text];
@@ -338,9 +337,9 @@ export default function Pronounce() {
                         setIdx(i);
                         reset();
                       }}
-                      className={clsx("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition", i === idx ? "bg-white/[0.08]" : "hover:bg-white/[0.04]")}
+                      className={clsx("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition", i === idx ? "bg-sunk" : "hover:bg-sunk")}
                     >
-                      <span className="w-7 text-[11px] font-bold text-faint">{p.level}</span>
+                      <span className="w-7 text-xs font-bold text-faint">{p.level}</span>
                       <span className="flex-1 truncate text-sm">{p.text}</span>
                       {best !== undefined && <span className={clsx("text-xs font-semibold", best >= 85 ? "text-ok" : best >= 60 ? "text-warn" : "text-bad")}>{best}</span>}
                     </button>

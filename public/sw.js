@@ -1,5 +1,5 @@
 // Service worker minimal : met en cache l'app pour un chargement rapide / hors-ligne.
-const CACHE = "verbo-v1";
+const CACHE = "verbo-v2";
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["./", "./index.html", "./icon.svg"])));
   self.skipWaiting();

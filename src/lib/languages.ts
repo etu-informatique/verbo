@@ -4,16 +4,15 @@ export interface LangInfo {
   code: LangCode;
   name: string; // nom en français
   native: string; // nom dans la langue
-  flag: string;
   speech: string; // code BCP-47 pour la synthèse / reconnaissance vocale
   accent: string; // couleur d'accent
 }
 
 export const LANGS: Record<LangCode, LangInfo> = {
-  en: { code: "en", name: "Anglais", native: "English", flag: "🇬🇧", speech: "en-US", accent: "#60a5fa" },
-  es: { code: "es", name: "Espagnol", native: "Español", flag: "🇪🇸", speech: "es-ES", accent: "#f59e0b" },
-  it: { code: "it", name: "Italien", native: "Italiano", flag: "🇮🇹", speech: "it-IT", accent: "#34d399" },
-  fr: { code: "fr", name: "Français", native: "Français", flag: "🇫🇷", speech: "fr-FR", accent: "#a78bfa" },
+  en: { code: "en", name: "Anglais", native: "English", speech: "en-US", accent: "#60a5fa" },
+  es: { code: "es", name: "Espagnol", native: "Español", speech: "es-ES", accent: "#f59e0b" },
+  it: { code: "it", name: "Italien", native: "Italiano", speech: "it-IT", accent: "#34d399" },
+  fr: { code: "fr", name: "Français", native: "Français", speech: "fr-FR", accent: "#a78bfa" },
 };
 
 export const LANG_LIST = Object.values(LANGS);

@@ -6,4 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   base: "./",
   plugins: [react(), tailwindcss()],
+  // En dev sous Windows (app Claude installée via le Store), le chemin réel du projet diffère :
+  // on autorise Vite à servir le Web Worker de l'IA locale.
+  server: { fs: { strict: false } },
 });

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import clsx from "clsx";
-import { BookmarkPlus, CheckCircle2, Gavel, RotateCcw, Trophy, XCircle } from "lucide-react";
-import { askJson, friendlyError } from "../lib/claude";
+import { ArrowDownUp, BookOpenCheck, BookmarkPlus, CheckCircle2, Gavel, Headphones, ListChecks, PenLine, Repeat, RotateCcw, Target, Trophy, XCircle, type LucideIcon } from "lucide-react";
+import { askJson, friendlyError } from "../lib/ai";
 import { EXERCISE_INFO, exercisesSchema, exercisesSystem, judgeSchema, type ExerciseKind } from "../lib/prompts";
 import { LANG_EN_NAME, LANGS } from "../lib/languages";
 import { checkAnswer, type AnswerVerdict } from "../lib/score";
@@ -19,6 +19,13 @@ interface Exercise {
   accepted: string[];
   translation: string;
   explanation: string;
+}
+
+const EX_ICONS: Record<ExerciseKind, LucideIcon> = { qcm: ListChecks, trou: PenLine, traduire: Repeat, ordre: ArrowDownUp, dictee: Headphones };
+
+function ExIcon({ kind, className }: { kind: ExerciseKind; className?: string }) {
+  const Icon = EX_ICONS[kind];
+  return <Icon className={className} aria-hidden />;
 }
 
 function shuffleWords(sentence: string): string[] {
@@ -84,12 +91,12 @@ function ExerciseView({ ex, onDone }: { ex: Exercise; onDone: (ok: boolean) => v
 
   return (
     <Card className="animate-fade-up">
-      <p className="text-xs font-semibold uppercase tracking-wider text-violet-300">
-        {EXERCISE_INFO[ex.kind].emoji} {EXERCISE_INFO[ex.kind].name}
+      <p className="text-xs font-semibold uppercase tracking-wider text-brand">
+        <ExIcon kind={ex.kind} className="mr-1.5 inline size-4 align-[-3px]" /> {EXERCISE_INFO[ex.kind].name}
       </p>
       <p className="mt-1 text-sm text-muted">{ex.instruction}</p>
 
-      {ex.kind !== "ordre" && ex.kind !== "dictee" && <p className="mt-4 font-display text-2xl leading-snug md:text-3xl">{ex.question}</p>}
+      {ex.kind !== "ordre" && ex.kind !== "dictee" && <p className="mt-4 font-extrabold tracking-tight text-2xl leading-snug md:text-3xl">{ex.question}</p>}
 
       {ex.kind === "dictee" && (
         <div className="mt-4 flex items-center gap-3">
@@ -113,7 +120,7 @@ function ExerciseView({ ex, onDone }: { ex: Exercise; onDone: (ok: boolean) => v
                 }}
                 className={clsx(
                   "rounded-xl border px-4 py-3 text-left transition",
-                  !verdict && "border-line bg-white/[0.03] hover:bg-white/[0.07]",
+                  !verdict && "border-line bg-sunk hover:bg-sunk",
                   verdict && o === ex.answer && "border-ok/60 bg-ok/15 text-ok",
                   verdict && o === answer && o !== ex.answer && "border-bad/60 bg-bad/15 text-bad",
                   verdict && o !== ex.answer && o !== answer && "border-line opacity-40"
@@ -129,7 +136,7 @@ function ExerciseView({ ex, onDone }: { ex: Exercise; onDone: (ok: boolean) => v
           <>
             <div className="flex min-h-14 flex-wrap gap-2 rounded-2xl border border-dashed border-line2 p-3">
               {picked.map((i) => (
-                <button key={i} disabled={!!verdict} onClick={() => setPicked(picked.filter((x) => x !== i))} className="rounded-lg bg-brand/20 px-3 py-1.5 text-[15px] animate-pop">
+                <button key={i} disabled={!!verdict} onClick={() => setPicked(picked.filter((x) => x !== i))} className="rounded-lg bg-brand-soft px-3 py-1.5 text-[15px] animate-pop">
                   {pool[Number(i)]}
                 </button>
               ))}
@@ -140,7 +147,7 @@ function ExerciseView({ ex, onDone }: { ex: Exercise; onDone: (ok: boolean) => v
                   key={i}
                   disabled={picked.includes(String(i)) || !!verdict}
                   onClick={() => setPicked([...picked, String(i)])}
-                  className="rounded-lg border border-line bg-white/[0.05] px-3 py-1.5 text-[15px] transition hover:bg-white/[0.1] disabled:opacity-20"
+                  className="rounded-lg border border-line bg-sunk px-3 py-1.5 text-[15px] transition hover:bg-sunk disabled:opacity-20"
                 >
                   {w}
                 </button>
@@ -194,7 +201,7 @@ function ExerciseView({ ex, onDone }: { ex: Exercise; onDone: (ok: boolean) => v
           )}
           {ex.translation && <p className="mt-1 text-xs text-faint">{ex.translation}</p>}
           <p className="mt-2 text-sm text-muted">{ex.explanation}</p>
-          {judgeNote && <p className="mt-2 rounded-lg bg-black/20 p-2 text-sm">⚖️ {judgeNote}</p>}
+          {judgeNote && <p className="mt-2 flex gap-2 rounded-lg bg-sunk p-2 text-sm"><Gavel className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />{judgeNote}</p>}
           <div className="mt-4 flex flex-wrap gap-2">
             <Button variant="primary" onClick={() => onDone(ok)}>
               Continuer
@@ -275,8 +282,8 @@ export default function Practice() {
           <button onClick={() => setItems(null)} className="text-sm text-muted hover:text-ink">
             Quitter
           </button>
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
-            <div className="h-full bg-brand-gradient transition-all" style={{ width: `${(i / items.length) * 100}%` }} />
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-sunk">
+            <div className="h-full bg-brand transition-all" style={{ width: `${(i / items.length) * 100}%` }} />
           </div>
           <span className="text-sm text-faint">
             {i + 1}/{items.length}
@@ -294,7 +301,7 @@ export default function Practice() {
       <div className="mx-auto max-w-md">
         <Card className="flex flex-col items-center gap-3 py-10 text-center animate-pop">
           <Trophy className="size-12 text-warn" />
-          <p className="font-display text-6xl">{pct}%</p>
+          <p className="font-extrabold tracking-tight text-6xl">{pct}%</p>
           <p className="text-muted">
             {good} bonnes réponses sur {items.length}. {pct >= 90 ? "Solide." : pct >= 60 ? "Correct, mais tu peux mieux faire." : "Il faut retravailler ça. Tes erreurs sont dans le carnet."}
           </p>
@@ -325,9 +332,9 @@ export default function Practice() {
                 <button
                   key={k}
                   onClick={() => setKinds(on ? kinds.filter((x) => x !== k) : [...kinds, k])}
-                  className={clsx("rounded-2xl border p-3 text-left transition", on ? "border-brand/60 bg-brand/10" : "border-line bg-white/[0.02] opacity-60 hover:opacity-100")}
+                  className={clsx("rounded-2xl border p-3 text-left transition", on ? "border-brand bg-brand-soft" : "border-line bg-sunk opacity-60 hover:opacity-100")}
                 >
-                  <span className="text-xl">{EXERCISE_INFO[k].emoji}</span>
+                  <ExIcon kind={k} className="size-5 text-brand" />
                   <p className="mt-1 text-sm font-semibold">{EXERCISE_INFO[k].name}</p>
                   <p className="text-xs text-muted">{EXERCISE_INFO[k].desc}</p>
                 </button>
@@ -341,7 +348,7 @@ export default function Practice() {
           <h2 className="mb-3 mt-6 text-sm font-semibold">Nombre de questions</h2>
           <div className="flex gap-2">
             {[5, 10, 15].map((n) => (
-              <button key={n} onClick={() => setCount(n)} className={clsx("rounded-xl border px-5 py-2 text-sm font-medium transition", count === n ? "border-brand/60 bg-brand/15" : "border-line text-muted")}>
+              <button key={n} onClick={() => setCount(n)} className={clsx("rounded-xl border px-5 py-2 text-sm font-medium transition", count === n ? "border-brand bg-brand-soft" : "border-line text-muted")}>
                 {n}
               </button>
             ))}
@@ -366,10 +373,10 @@ export default function Practice() {
         <Card className="h-fit">
           <h2 className="text-sm font-semibold">Comment ça marche</h2>
           <ul className="mt-3 space-y-2 text-sm text-muted">
-            <li>🎯 Adapté à ton niveau ({settings.level}) en {LANGS[settings.target].name.toLowerCase()}.</li>
-            <li>🧠 Chaque faute part dans ton carnet d'erreurs.</li>
-            <li>⚖️ Une traduction différente mais juste ? Conteste, l'IA arbitre.</li>
-            <li>📌 Ajoute ce que tu rates à tes révisions espacées.</li>
+            <li className="flex gap-2"><Target className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />Adapté à ton niveau ({settings.level}) en {LANGS[settings.target].name.toLowerCase()}.</li>
+            <li className="flex gap-2"><BookOpenCheck className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />Chaque faute part dans ton carnet d'erreurs.</li>
+            <li className="flex gap-2"><Gavel className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />Une traduction différente mais juste ? Conteste, l'IA arbitre.</li>
+            <li className="flex gap-2"><BookmarkPlus className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />Ajoute ce que tu rates à tes révisions espacées.</li>
           </ul>
         </Card>
       </div>

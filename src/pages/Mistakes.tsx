@@ -59,8 +59,8 @@ export default function Mistakes() {
                       <span className="capitalize">{t}</span>
                       <span className="font-semibold">{n}</span>
                     </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className="h-full rounded-full bg-brand-gradient" style={{ width: `${(n / max) * 100}%` }} />
+                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-sunk">
+                      <div className="h-full rounded-full bg-brand" style={{ width: `${(n / max) * 100}%` }} />
                     </div>
                   </button>
                 </li>
@@ -75,18 +75,18 @@ export default function Mistakes() {
                   <span className="text-bad line-through decoration-bad/60">{m.wrong}</span>
                   <span className="text-faint">→</span>
                   <span className="font-semibold text-ok">{m.right}</span>
-                  <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-violet-300">{m.type}</span>
+                  <span className="ml-auto text-xs font-semibold uppercase tracking-wider text-brand">{m.type}</span>
                 </div>
                 <p className="mt-1.5 text-sm text-muted">{m.explanation}</p>
                 {m.sentence !== m.wrong && <p className="mt-2 truncate text-xs italic text-faint">« {m.sentence} »</p>}
                 <div className="mt-2 flex items-center gap-1">
-                  <span className="text-[11px] text-faint">{new Date(m.at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
+                  <span className="text-xs text-faint">{new Date(m.at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</span>
                   <button
                     onClick={() => {
                       const ok = addCard({ front: m.right, back: `✗ ${m.wrong}`, note: m.explanation, source: "coach" });
                       toast(ok ? "Ajouté aux révisions" : "Déjà dans tes révisions", ok ? "ok" : "info");
                     }}
-                    className="ml-auto flex items-center gap-1 rounded-full px-2 py-1 text-xs text-violet-300 hover:bg-white/[0.06]"
+                    className="ml-auto flex items-center gap-1 rounded-lg px-2 min-h-9 py-1 text-xs text-brand hover:bg-sunk"
                   >
                     <BookmarkPlus className="size-3.5" /> Réviser
                   </button>

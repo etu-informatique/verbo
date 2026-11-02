@@ -22,4 +22,4 @@ Avant de construire Verbo, on a passé en revue les applications de référence 
 - **Carnet d'erreurs** : chaque faute (coach, correcteur, exercices) est enregistrée et classée par type (conjugaison, vocabulaire, naturel, faux ami…). Un bouton génère une série d'exercices ciblée sur *tes* erreurs récurrentes.
 - **Sévérité réglable** : le coach ne fait pas de compliments gratuits. En mode « Impitoyable », une seule faute plafonne la note à 70.
 - **Langue réelle** : le coach, les exercices et l'argot privilégient les expressions que tout le monde comprend (« It's up to you », « No worries », « Me da igual », « Figurati »…), en signalant ce qui est régional.
-- **100 % navigateur** : pas de compte, pas de serveur. Les données restent sur l'appareil (export / import JSON possible).
+- **100 % gratuit et navigateur** : pas de compte, pas de clé, pas de serveur. L'IA peut même tourner directement sur l'appareil (illimitée et privée). Les données restent sur l'appareil (export / import JSON possible).
